@@ -1,0 +1,49 @@
+<div class="flex min-h-screen bg-[#F6F6FA] font-['Plus_Jakarta_Sans',sans-serif] text-[#14142B]">
+  <!-- Mobile scrim -->
+  @if (menuOpen()) {
+  <button type="button" aria-label="Close menu" class="fixed inset-0 z-20 bg-[#0A0A3C]/50 md:hidden" (click)="menuOpen.set(false)"></button>
+  }
+
+  <aside
+    class="fixed inset-y-0 left-0 z-30 flex w-64 shrink-0 flex-col gap-8 border-r border-[#E6E6F0] bg-white p-6 transition-transform md:sticky md:top-0 md:h-screen md:translate-x-0"
+    [class.-translate-x-full]="!menuOpen()"
+  >
+    <img src="assets/etairia-header-logo.png" alt="Etairia Global" class="max-w-2xs" />
+
+    <nav class="flex flex-1 flex-col gap-1" aria-label="Main">
+      @for (n of nav; track n.path) {
+      <a
+        [routerLink]="n.path"
+        routerLinkActive="bg-[#F28C1B]/15 text-[#9A4F00]"
+        (click)="menuOpen.set(false)"
+        class="flex min-h-11 items-center rounded-[10px] px-3.5 text-sm font-semibold text-[#3A3A5C] transition hover:bg-[#F6F6FA]"
+        >{{ n.label }}</a
+      >
+      }
+      <a
+        routerLink="/login"
+        class="mt-auto flex min-h-11 items-center rounded-[10px] px-3.5 text-sm font-semibold text-[#6B6B85] transition hover:bg-[#F6F6FA]"
+        >Sign out</a
+      >
+    </nav>
+  </aside>
+
+  <div class="flex min-w-0 flex-1 flex-col">
+    <!-- Mobile top bar -->
+    <header class="flex items-center justify-between border-b border-[#E6E6F0] bg-white px-4 py-2 md:hidden">
+      <img src="assets/etairia-logo.png" alt="Etairia Global" class="h-8" />
+      <button
+        type="button"
+        class="inline-flex min-h-11 items-center rounded-[10px] border border-[#D9D9E8] px-4 text-sm font-bold text-[#0A0A3C]"
+        [attr.aria-expanded]="menuOpen()"
+        (click)="menuOpen.set(!menuOpen())"
+      >
+        Menu
+      </button>
+    </header>
+
+    <main class="min-w-0 flex-1 p-4 sm:p-6 lg:p-10">
+      <router-outlet />
+    </main>
+  </div>
+</div>

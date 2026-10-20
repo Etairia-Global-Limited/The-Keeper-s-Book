@@ -1,0 +1,152 @@
+<main
+  class="relative flex min-h-screen flex-wrap items-center justify-center gap-14 overflow-hidden bg-[#0A0A3C] px-8 py-12 font-['Plus_Jakarta_Sans',sans-serif]"
+>
+  <!-- Background -->
+  <div class="pointer-events-none absolute inset-0" aria-hidden="true">
+    <div class="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,.09)_1px,transparent_1px)] bg-size-[30px_30px]"></div>
+    <div
+      class="absolute -left-40 -top-36 size-130 animate-pulse rounded-full bg-[#F28C1B]/50 blur-[90px] motion-reduce:animate-none"
+    ></div>
+    <div
+      class="absolute -bottom-56 -right-44 size-150 animate-pulse rounded-full bg-[#3A3AC4]/55 blur-[90px] motion-reduce:animate-none"
+    ></div>
+    <div class="absolute -top-16 right-[22%] size-75 rounded-full bg-[#F28C1B]/20 blur-[90px]"></div>
+
+    <div
+      class="absolute left-1/2 top-1/2 -ml-120 -mt-120 size-240 animate-[spin_110s_linear_infinite] rounded-full border-[1.5px] border-dashed border-[#F28C1B]/20 min-[900px]:left-[28%] motion-reduce:animate-none"
+    >
+      <i class="absolute -top-1.75 left-1/2 -ml-1.75 size-3.5 rounded-full bg-[#F28C1B] shadow-[0_0_18px_4px_rgba(242,140,27,.7)]"></i>
+    </div>
+    <div
+      class="absolute left-1/2 top-1/2 -ml-85 -mt-85 size-170 animate-[spin_65s_linear_infinite_reverse] rounded-full border-[1.5px] border-white/20 min-[900px]:left-[28%] motion-reduce:animate-none"
+    >
+      <i class="absolute -top-1.75 left-1/2 -ml-1.75 size-3.5 rounded-full bg-white shadow-[0_0_16px_3px_rgba(255,255,255,.6)]"></i>
+    </div>
+    <div
+      class="absolute left-1/2 top-1/2 -ml-52.5 -mt-52.5 size-105 animate-[spin_40s_linear_infinite] rounded-full border-[1.5px] border-[#F28C1B]/40 min-[900px]:left-[28%] motion-reduce:animate-none"
+    >
+      <i class="absolute -top-1.75 left-1/2 -ml-1.75 size-3.5 rounded-full bg-[#F28C1B] shadow-[0_0_18px_4px_rgba(242,140,27,.7)]"></i>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <section class="relative flex max-w-130 flex-[1_1_380px] flex-col gap-5 text-white">
+    <span
+      class="inline-flex items-center gap-2.5 text-xs font-bold uppercase tracking-[.14em] text-[#F7B25E] before:h-0.5 before:w-8 before:bg-[#F28C1B] before:content-['']"
+      >Etairia Access</span
+    >
+    <h1 class="text-[34px] font-extrabold leading-[1.1] tracking-[-.02em] min-[900px]:text-[44px]">
+      One sign-in. <b class="text-[#F28C1B]">Every application</b>, in the right hands.
+    </h1>
+    <p class="text-base leading-relaxed text-[#CFCFEA]">Manage applications, roles, users and clients from a single, secure place.</p>
+    <ul class="mt-2 flex flex-col gap-3.5">
+      @for (item of features; track item) {
+      <li class="flex items-center gap-3.5 font-semibold">
+        <span class="flex size-9 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[#F28C1B]/70 bg-[#F28C1B]/10">
+          <span class="size-2 animate-pulse rounded-full bg-[#F28C1B] motion-reduce:animate-none"></span>
+        </span>
+        {{ item }}
+      </li>
+      }
+    </ul>
+  </section>
+
+  <!-- Card -->
+  <section
+    class="relative flex w-full max-w-107.5 flex-[0_1_430px] flex-col gap-4 rounded-[22px] bg-white p-7 shadow-[0_30px_80px_rgba(0,0,10,.5)] before:absolute before:inset-x-9 before:top-0 before:h-1 before:rounded-b before:bg-[linear-gradient(90deg,#F28C1B,#0A0A3C)] before:content-[''] sm:p-9"
+  >
+    <img src="assets/etairia-header-logo.png" alt="Etairia Global" class="mb-1" />
+    <div>
+      <h2 class="text-[26px] font-extrabold text-[#0A0A3C]">Welcome back</h2>
+      <p class="mt-1 text-sm text-[#6B6B85]">Sign in to continue to the admin portal.</p>
+    </div>
+
+    @if (error()) {
+  <p role="alert" class="rounded-[10px] bg-red-50 px-3.5 py-2.5 text-sm font-semibold text-[#B3261E]">{{ error() }}</p>
+}
+
+    <form novalidate (submit)="signIn($event)" class="flex flex-col gap-4">
+      <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
+        Email address
+        <input
+          type="email"
+          autocomplete="email"
+          placeholder="name@company.com"
+          class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
+          [formField]="f.email"
+        />
+        @if (f.email().touched() && f.email().invalid()) {
+        <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.email().errors()[0]?.message }}</span>
+        }
+      </label>
+
+      <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
+        Password
+        <span class="relative">
+          <input
+            [type]="showPassword() ? 'text' : 'password'"
+            autocomplete="current-password"
+            placeholder="Enter your password"
+            class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30 pr-20"
+            [formField]="f.password"
+          />
+          <button
+            type="button"
+            class="absolute right-1 top-0 min-h-11 px-3 text-[13px] font-bold text-[#9A4F00]  cursor-pointer"
+            (click)="showPassword.set(!showPassword())"
+          >
+            {{ showPassword() ? 'Hide' : 'Show' }}
+          </button>
+        </span>
+        @if (f.password().touched() && f.password().invalid()) {
+        <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.password().errors()[0]?.message }}</span>
+        }
+      </label>
+
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <label class="flex min-h-11 cursor-pointer items-center gap-2 text-sm">
+          <input type="checkbox" class="size-4 accent-[#F28C1B]" [formField]="f.remember" /> Keep me signed in
+        </label>
+        <a routerLink="/forgot-password" class="text-sm font-bold text-[#9A4F00] hover:underline">Forgot password?</a>
+      </div>
+
+      <button
+  type="submit"
+  [disabled]="loading()"
+  [attr.aria-busy]="loading()"
+  class="group relative flex min-h-12 w-full items-center justify-center gap-2.5 overflow-hidden rounded-[10px] bg-[#F28C1B] text-[15px] font-extrabold text-[#0A0A3C] transition
+         enabled:cursor-pointer enabled:hover:-translate-y-px enabled:hover:shadow-[0_8px_20px_rgba(242,140,27,.45)]
+         disabled:cursor-not-allowed disabled:opacity-90"
+>
+  <!-- moving shimmer while loading -->
+  @if (loading()) {
+    <span
+      class="pointer-events-none absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite] bg-gradient-to-r from-transparent via-white/30 to-transparent"
+    ></span>
+  }
+
+  <!-- spinner -->
+  @if (loading()) {
+    <svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" stroke="#0A0A3C" stroke-opacity=".25" stroke-width="4" />
+      <path d="M22 12a10 10 0 0 0-10-10" stroke="#0A0A3C" stroke-width="4" stroke-linecap="round" />
+    </svg>
+  }
+
+  <span class="relative flex items-baseline">
+    {{ loading() ? 'Signing in' : 'Sign in' }}
+    @if (loading()) {
+      <span class="ml-0.5 inline-flex w-4 justify-start">
+        <span class="animate-[dot_1.2s_infinite]">.</span>
+        <span class="animate-[dot_1.2s_infinite_.2s]">.</span>
+        <span class="animate-[dot_1.2s_infinite_.4s]">.</span>
+      </span>
+    }
+  </span>
+</button>
+
+    </form>
+
+    <p class="text-center text-sm text-[#6B6B85]">Need access? Contact your administrator.</p>
+  </section>
+</main>

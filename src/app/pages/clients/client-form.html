@@ -1,0 +1,112 @@
+<a routerLink="/clients" class="mb-1 inline-flex min-h-11 items-center text-sm font-bold text-[#9A4F00] hover:underline">← Clients</a>
+
+<app-page-header
+  [heading]="isEdit() ? 'Edit client' : 'New client'"
+  [subtitle]="isEdit() ? 'Update the details and save your changes.' : 'Fill in the details below.'"
+/>
+
+<form novalidate (submit)="save($event)" class="rounded-2xl border border-[#E6E6F0] bg-white p-6 shadow-sm">
+  <div class="grid gap-5 md:grid-cols-2">
+    <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
+      Client name
+      <input
+        type="text"
+        placeholder="Client name"
+        class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
+        [formField]="f.clientName"
+      />
+      @if (f.clientName().touched() && f.clientName().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.clientName().errors()[0]?.message }}</span>
+      }
+    </label>
+    <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
+      Contact name
+      <input
+        type="text"
+        placeholder="Contact name"
+        class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
+        [formField]="f.contactName"
+      />
+      @if (f.contactName().touched() && f.contactName().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.contactName().errors()[0]?.message }}</span>
+      }
+    </label>
+    <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
+      Contact email
+      <input
+        type="email"
+        placeholder="Contact email"
+        class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
+        [formField]="f.contactEmail"
+      />
+      @if (f.contactEmail().touched() && f.contactEmail().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.contactEmail().errors()[0]?.message }}</span>
+      }
+    </label>
+    <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
+      Contact phone
+      <input
+        type="text"
+        placeholder="Contact phone"
+        class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
+        [formField]="f.contactPhone"
+      />
+      @if (f.contactPhone().touched() && f.contactPhone().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.contactPhone().errors()[0]?.message }}</span>
+      }
+    </label>
+    <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
+      Country
+      <input
+        type="text"
+        placeholder="Country"
+        class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
+        [formField]="f.country"
+      />
+      @if (f.country().touched() && f.country().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.country().errors()[0]?.message }}</span>
+      }
+    </label>
+    <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
+      Status
+      <select
+        class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
+        [formField]="f.status"
+      >
+        <option value="">Select…</option>
+        @for (o of statusOptions; track o) {
+        <option [value]="o">{{ o }}</option>
+        }
+      </select>
+      @if (f.status().touched() && f.status().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.status().errors()[0]?.message }}</span>
+      }
+    </label>
+    <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B] md:col-span-2">
+      Address
+      <textarea
+        rows="4"
+        placeholder="Address"
+        class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30 py-3"
+        [formField]="f.address"
+      ></textarea>
+      @if (f.address().touched() && f.address().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.address().errors()[0]?.message }}</span>
+      }
+    </label>
+  </div>
+
+  <div class="mt-8 flex flex-wrap justify-end gap-3 border-t border-[#EEEEF6] pt-6">
+    <a
+      routerLink="/clients"
+      class="inline-flex min-h-11 items-center justify-center rounded-[10px] border border-[#D9D9E8] bg-white px-5 text-sm font-bold text-[#0A0A3C] transition hover:bg-[#F6F6FA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A3C]"
+      >Cancel</a
+    >
+    <button
+      type="submit"
+      class="inline-flex min-h-11 items-center justify-center rounded-[10px] bg-[#F28C1B] px-5 text-sm font-extrabold text-[#0A0A3C] transition hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(242,140,27,.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A3C]"
+    >
+      {{ isEdit() ? 'Save changes' : 'Create' }}
+    </button>
+  </div>
+</form>
