@@ -10,10 +10,12 @@ import { catchError, finalize, Observable, of } from "rxjs";
 import { HttpErrorResponse } from "@angular/common/http";
 import { CreateApplicationPayload, UpdateApplicationPayload } from "../../constants/model";
 import { Environment, isSuccessResponse, toErrorResponse } from "../../constants/schema";
+import { PageLoader } from "../../shared/page-loader";
+import { LoadingButton } from "../../shared/loading-button";
 
 @Component({
   selector: "app-application-form",
-  imports: [RouterLink, FormField, PageHeader],
+  imports: [RouterLink, FormField, PageHeader, PageLoader, LoadingButton],
   templateUrl: "./application-form.html",
 })
 export class ApplicationForm implements OnInit {
@@ -24,7 +26,8 @@ export class ApplicationForm implements OnInit {
   private owner = inject(ApplicationOwnerService)
   private service = inject(ApplicationService);
   private destroyRef = inject(DestroyRef)
-  private loading = signal(false);
+   loading = signal(false);
+  loadingOwner = signal(false);
   private router = inject(Router)
 
   protected readonly isEdit = computed(() => this.mode() === "edit");
@@ -62,12 +65,15 @@ export class ApplicationForm implements OnInit {
 }
 
 private loadApplication(id: string) {
+    this.loadingOwner.set(true);
   this.service.getById(id)
     .pipe(
       takeUntilDestroyed(this.destroyRef),
       catchError(toErrorResponse),
+        finalize(()=> this.loadingOwner.set(false))
     )
     .subscribe((response) => {
+      console.log('Response: ', response)
       if (isSuccessResponse(response)) {
         // adjust to your response shape
         const app = (response as any).data;
@@ -122,6 +128,7 @@ protected save(event: Event) {
         finalize(() => this.loading.set(false)),
       )
       .subscribe((response) => {
+        console.log("Create Respone: ", response)
         if (isSuccessResponse(response)) {
           this.router.navigate(['applications']);
         }

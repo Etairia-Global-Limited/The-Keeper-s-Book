@@ -1,0 +1,27 @@
+<div class="overflow-x-auto" role="status" aria-busy="true" aria-label="Loading">
+  <table class="w-full min-w-[640px] border-collapse">
+    <thead>
+      <tr>
+        @for (c of columns(); track $index) {
+          <th scope="col" class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]">{{ c }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody aria-hidden="true">
+      @for (row of grid(); track $index) {
+        <tr>
+          @for (w of row; track $index) {
+            <td class="border-b border-[#EEEEF6] px-4 py-4">
+              <div
+                class="h-3.5 animate-pulse rounded bg-[#ECECF4] motion-reduce:animate-none"
+                [class]="w === 0 ? 'w-16' : ''"
+                [style.width.%]="w === 0 ? null : w"
+              ></div>
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+  <span class="sr-only">Loading</span>
+</div>

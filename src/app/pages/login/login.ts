@@ -7,10 +7,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, finalize, of } from "rxjs";
 import { ApiResponse, ErrorResponse, LoginResopnse } from "../../constants/response.model";
 import { HttpErrorResponse } from "@angular/common/http";
+import { PageLoader } from "../../shared/page-loader";
 
 @Component({
   selector: "app-login",
-  imports: [RouterLink, FormField],
+  imports: [RouterLink, FormField, PageLoader],
   templateUrl: "./login.html",
 })
 export class Login {

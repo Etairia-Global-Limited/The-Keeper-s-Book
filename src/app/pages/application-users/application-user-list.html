@@ -20,8 +20,9 @@
       class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30 sm:w-auto"
       [formField]="filters.filter"
     >
-      @for (o of filterOptions; track o) {
-      <option [value]="o">{{ o }}</option>
+    <option value="" selected>All Application</option>
+      @for (o of filterOptions(); track o.id) {
+      <option [value]="o.id">{{ o.name }}</option>
       }
     </select>
     <button
@@ -95,6 +96,11 @@
                 [routerLink]="['/application-users', r.id, 'edit']"
                 class="inline-flex min-h-11 items-center text-sm font-bold text-[#9A4F00] hover:underline"
                 >Edit</a
+              >
+              <a
+                [routerLink]="['/application-users', r.id, 'kyc']"
+                class="inline-flex min-h-11 items-center text-sm font-bold text-[#9A4F00] hover:underline"
+                >Review KYC</a
               >
               <button
                 type="button"

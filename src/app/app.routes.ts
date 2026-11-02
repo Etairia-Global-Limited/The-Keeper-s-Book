@@ -47,7 +47,7 @@ export const routes: Routes = [
       { path: "users", loadComponent: () => import("./pages/users/user-list").then((m) => m.UserList) },
       { path: "users/new", loadComponent: () => import("./pages/users/user-form").then((m) => m.UserForm) },
       { path: "users/:id/edit", data: { mode: "edit" }, loadComponent: () => import("./pages/users/user-form").then((m) => m.UserForm) },
-      { path: "users/:id/kyc", loadComponent: () => import("./pages/users/user-kyc").then((m) => m.UserKyc) },
+      { path: "application-users/:id/kyc", loadComponent: () => import("./pages/users/user-kyc").then((m) => m.UserKyc) },
       { path: "clients", loadComponent: () => import("./pages/clients/client-list").then((m) => m.ClientList) },
       { path: "clients/new", loadComponent: () => import("./pages/clients/client-form").then((m) => m.ClientForm) },
       {

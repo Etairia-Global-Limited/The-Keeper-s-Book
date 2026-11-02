@@ -6,19 +6,21 @@ import { StatusBadge } from "../../shared/status-badge";
 import { ApplicationService } from "../../services/application/application-service";
 import { SearchPayload } from "../../constants/model";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { catchError, of } from "rxjs";
+import { catchError, finalize, of } from "rxjs";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ApiResponse, ApplicationRow, ErrorResponse, MetaResponse, PaginatedResponse } from "../../constants/response.model";
+import { TableSkeleton } from "../../shared/table-skeleton";
 
 @Component({
   selector: "app-application-list",
-  imports: [RouterLink, FormField, PageHeader, StatusBadge],
+  imports: [RouterLink, FormField, PageHeader, StatusBadge, TableSkeleton],
   templateUrl: "./application-list.html",
 })
 export class ApplicationList {
   private service = inject(ApplicationService);
   private destroyRef = inject(DestroyRef)
   protected readonly filterOptions = ["All statuses", "Active", "Inactive"];
+  loading = signal(false);
 
   private readonly filterModel = signal({ search: "", filter: "All statuses" });
   protected readonly filters = form(this.filterModel);
@@ -47,6 +49,7 @@ export class ApplicationList {
   }
 
   search(payload: SearchPayload){
+    this.loading.set(true);
     const isApiResponse = (r: PaginatedResponse<any> | ErrorResponse): r is PaginatedResponse<any> => r.statusCode === 200
     this.service.search(payload).pipe(
       takeUntilDestroyed(this.destroyRef),
@@ -54,7 +57,8 @@ export class ApplicationList {
         statusCode: err.status || 500,
       message: err.error?.message ?? 'Something went wrong. Please try again.',
       error: err.error
-      }))
+      })),
+            finalize(() => this.loading.set(false))
     ).subscribe((response) => {
       if(isApiResponse(response)){
         console.log('Response: ', response.data)

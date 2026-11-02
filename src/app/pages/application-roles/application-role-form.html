@@ -7,6 +7,8 @@
   [subtitle]="isEdit() ? 'Update the details and save your changes.' : 'Fill in the details below.'"
 />
 
+<app-page-loader [visible]="loadingOwner()" />
+
 <form novalidate (submit)="save($event)" class="rounded-2xl border border-[#E6E6F0] bg-white p-6 shadow-sm">
   <div class="grid gap-5 md:grid-cols-2">
     <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
@@ -15,28 +17,28 @@
         type="text"
         placeholder="Role name"
         class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
-        [formField]="f.roleName"
+        [formField]="f.name"
       />
-      @if (f.roleName().touched() && f.roleName().invalid()) {
-      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.roleName().errors()[0]?.message }}</span>
+      @if (f.name().touched() && f.name().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.name().errors()[0]?.message }}</span>
       }
     </label>
     <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
       Application
       <select
         class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
-        [formField]="f.application"
+        [formField]="f.applicationId"
       >
         <option value="">Select…</option>
-        @for (o of applicationOptions; track o) {
-        <option [value]="o">{{ o }}</option>
+        @for (o of applicationOptions(); track o) {
+        <option [value]="o.id">{{ o.name }}</option>
         }
       </select>
-      @if (f.application().touched() && f.application().invalid()) {
-      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.application().errors()[0]?.message }}</span>
+      @if (f.applicationId().touched() && f.applicationId().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.applicationId().errors()[0]?.message }}</span>
       }
     </label>
-    <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
+    <!-- <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
       Status
       <select
         class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
@@ -50,7 +52,7 @@
       @if (f.status().touched() && f.status().invalid()) {
       <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.status().errors()[0]?.message }}</span>
       }
-    </label>
+    </label> -->
     <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B] md:col-span-2">
       Description
       <textarea
@@ -63,7 +65,7 @@
       <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.description().errors()[0]?.message }}</span>
       }
     </label>
-    <fieldset class="md:col-span-2">
+    <!-- <fieldset class="md:col-span-2">
       <legend class="mb-2 text-[13px] font-semibold text-[#14142B]">Permissions</legend>
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <label class="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm">
@@ -85,7 +87,7 @@
           <input type="checkbox" class="size-4 accent-[#F28C1B]" [formField]="f.permissions.export" /> Export
         </label>
       </div>
-    </fieldset>
+    </fieldset> -->
   </div>
 
   <div class="mt-8 flex flex-wrap justify-end gap-3 border-t border-[#EEEEF6] pt-6">
@@ -94,11 +96,14 @@
       class="inline-flex min-h-11 items-center justify-center rounded-[10px] border border-[#D9D9E8] bg-white px-5 text-sm font-bold text-[#0A0A3C] transition hover:bg-[#F6F6FA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A3C]"
       >Cancel</a
     >
-    <button
+
+    <app-loading-button type="submit" [loading]="loading()" loadingLabel="Saving…">{{ isEdit() ? 'Save changes' : 'Create' }}</app-loading-button>
+
+    <!-- <button
       type="submit"
       class="inline-flex min-h-11 items-center justify-center rounded-[10px] bg-[#F28C1B] px-5 text-sm font-extrabold text-[#0A0A3C] transition hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(242,140,27,.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A3C]"
     >
       {{ isEdit() ? 'Save changes' : 'Create' }}
-    </button>
+    </button> -->
   </div>
 </form>

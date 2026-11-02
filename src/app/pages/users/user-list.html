@@ -52,20 +52,15 @@
             scope="col"
             class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]"
           >
-            Type
+            Phone number
           </th>
           <th
             scope="col"
             class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]"
           >
-            MFA
+            Username
           </th>
-          <th
-            scope="col"
-            class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]"
-          >
-            Last login
-          </th>
+
           <th
             scope="col"
             class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]"
@@ -83,31 +78,31 @@
       <tbody>
         @for (r of rows(); track r.id) {
         <tr class="hover:bg-[#FAFAFD]">
-          <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm whitespace-nowrap font-bold text-[#0A0A3C]">{{ r.name }}</td>
+          <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm whitespace-nowrap font-bold text-[#0A0A3C]">{{ r.userProfile.firstName }} {{r.userProfile.lastName}}</td>
           <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]">{{ r.email }}</td>
-          <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]">{{ r.type }}</td>
-          <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]">{{ r.mfa }}</td>
-          <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]">{{ r.lastLogin }}</td>
-          <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]"><app-status-badge [status]="r.status" /></td>
+          <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]">{{ r.userProfile.phoneNumber }}</td>
+          <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]">{{ r.username }}</td>
+          <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]"><app-status-badge [status]="r.isActive ? 'Active' : 'Inactive'" /></td>
           <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]">
             <div class="flex items-center gap-4 whitespace-nowrap">
-              <a
-                [routerLink]="['/users', r.id, 'kyc']"
-                class="inline-flex min-h-11 items-center text-sm font-bold text-[#9A4F00] hover:underline"
-                >Review KYC</a
-              >
-              <a
-                [routerLink]="['/users', r.id, 'edit']"
-                class="inline-flex min-h-11 items-center text-sm font-bold text-[#9A4F00] hover:underline"
-                >Edit</a
-              >
-              <button
-                type="button"
-                class="inline-flex min-h-11 items-center text-sm font-bold text-[#B3261E] hover:underline"
-                (click)="suspend(r)"
-              >
-                Suspend
-              </button>
+              
+              @if(r.isActive){
+                <button
+                  type="button"
+                  class="inline-flex min-h-11 items-center text-sm font-bold text-[#B3261E] hover:underline"
+                  (click)="suspend(r)"
+                >
+                  Suspend
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="inline-flex min-h-11 items-center text-sm font-bold text-[#B3261E] hover:underline"
+                  (click)="restore(r)"
+                >
+                  Suspend
+                </button>
+              }
             </div>
           </td>
         </tr>

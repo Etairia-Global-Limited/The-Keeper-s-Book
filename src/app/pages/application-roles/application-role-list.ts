@@ -1,87 +1,95 @@
-import { Component, signal } from "@angular/core";
+import { Component, DestroyRef, inject, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import { FormField, form } from "@angular/forms/signals";
 import { PageHeader } from "../../shared/page-header";
 import { StatusBadge } from "../../shared/status-badge";
+import { ApplicationService } from "../../services/application/application-service";
+import { ApplicationRoleService } from "../../services/application-role/application-role-service";
+import { ApiResponse, ApplicationRoleRow, ErrorResponse, MetaResponse, PaginatedResponse } from "../../constants/response.model";
+import { SearchPayload } from "../../constants/model";
+import { catchError, finalize, of } from "rxjs";
+import { HttpErrorResponse } from "@angular/common/http";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { TableSkeleton } from "../../shared/table-skeleton";
 
-interface ApplicationRoleRow {
-  id: string;
-  role: string;
-  application: string;
-  description: string;
-  permissions: string;
-  users: string;
-  status: string;
-}
+
 
 @Component({
   selector: "app-application-role-list",
-  imports: [RouterLink, FormField, PageHeader, StatusBadge],
+  imports: [RouterLink, FormField, PageHeader, StatusBadge, TableSkeleton],
   templateUrl: "./application-role-list.html",
 })
 export class ApplicationRoleList {
-  protected readonly filterOptions = ["All applications", "Customer Portal", "FormField Operations", "Partner Hub"];
+  private appService = inject(ApplicationService);
+  private service = inject(ApplicationRoleService);
+  private destroyRef = inject(DestroyRef);
+  loading = signal(false);
+
+  protected readonly filterOptions = signal<any[]>([]);
 
   private readonly filterModel = signal({ search: "", filter: "All applications" });
   protected readonly filters = form(this.filterModel);
 
   // TODO: replace the sample rows with your API data
-  protected readonly rows = signal<ApplicationRoleRow[]>([
-    {
-      id: "1",
-      role: "Administrator",
-      application: "Customer Portal",
-      description: "Full access to settings and users",
-      permissions: "24",
-      users: "6",
-      status: "Active",
-    },
-    {
-      id: "2",
-      role: "Manager",
-      application: "Partner Hub",
-      description: "Manage records and approve requests",
-      permissions: "16",
-      users: "31",
-      status: "Active",
-    },
-    {
-      id: "3",
-      role: "Supervisor",
-      application: "FormField Operations",
-      description: "Review and assign field tasks",
-      permissions: "12",
-      users: "58",
-      status: "Active",
-    },
-    {
-      id: "4",
-      role: "Auditor",
-      application: "Billing Console",
-      description: "Read-only access to logs and reports",
-      permissions: "8",
-      users: "4",
-      status: "Active",
-    },
-    {
-      id: "5",
-      role: "Agent",
-      application: "Support Desk",
-      description: "Handle and update tickets",
-      permissions: "10",
-      users: "120",
-      status: "Active",
-    },
-    {
-      id: "6",
-      role: "Viewer",
-      application: "Reports Studio",
-      description: "View dashboards only",
-      permissions: "3",
-      users: "74",
-      status: "Inactive",
-    },
-  ]);
+  protected readonly rows = signal<ApplicationRoleRow[]>([]);
+
+  meta = signal<MetaResponse>({
+      total: 0,
+      page: 0,
+      pageSize:0,
+      totalPages: 0
+    })
+
+     ngOnInit():void{
+    const payload: SearchPayload = {
+      page: 1,
+      pageSize: 10,
+      sortBy: "",
+      sortOrder: '',
+      filter: '',
+      keyword:''
+    }
+    this.search(payload)
+    this.getApp()
+  }
+
+  search(payload: SearchPayload){
+    this.loading.set(true);
+    const isApiResponse = (r: PaginatedResponse<any> | ErrorResponse): r is PaginatedResponse<any> => r.statusCode === 200
+    this.service.search(payload).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      catchError((err: HttpErrorResponse) => of<ErrorResponse>({
+        statusCode: err.status || 500,
+      message: err.error?.message ?? 'Something went wrong. Please try again.',
+      error: err.error
+      })),
+      finalize(() => this.loading.set(false))
+    ).subscribe((response) => {
+      if(isApiResponse(response)){
+        console.log('Response: ', response.data)
+        this.rows.set(response.data)
+      }
+    })
+  }
+
+  getApp(){
+     const isApiResponse = (r: ApiResponse<any> | ErrorResponse): r is PaginatedResponse<any> => r.statusCode === 200
+    this.appService.getAll().pipe(
+      takeUntilDestroyed(this.destroyRef),
+      catchError((err: HttpErrorResponse) => of<ErrorResponse>({
+        statusCode: err.status || 500,
+      message: err.error?.message ?? 'Something went wrong. Please try again.',
+      error: err.error
+      }))
+    ).subscribe((response) => {
+      if(isApiResponse(response)){
+        console.log('Response: ', response.data)
+        this.filterOptions.set(response.data)
+        // this.meta.set(response.meta)
+      }
+    })
+  }
+
 
   protected remove(row: ApplicationRoleRow) {
     // TODO: call your service for "Delete" on row.id

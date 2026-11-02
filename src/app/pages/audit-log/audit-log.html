@@ -1,10 +1,11 @@
-<app-page-header heading="Audit Log" subtitle="A record of who did what, when and from where.">
+<app-page-header heading="Audit Log" subtitle="A record of who did what and when.">
   <button
     type="button"
-    class="inline-flex min-h-11 items-center justify-center rounded-[10px] bg-[#F28C1B] px-5 text-sm font-extrabold text-[#0A0A3C] transition hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(242,140,27,.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A3C]"
-    (click)="downloadCsv()"
+    class="inline-flex min-h-11 items-center justify-center rounded-[10px] bg-[#F28C1B] px-5 text-sm font-extrabold text-[#0A0A3C] transition hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(242,140,27,.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A3C] disabled:cursor-not-allowed disabled:opacity-60"
+    [disabled]="exporting()"
+    (click)="download('csv')"
   >
-    Download CSV
+    {{ exporting() ? "Preparing…" : "Download CSV" }}
   </button>
 </app-page-header>
 
@@ -18,91 +19,107 @@
       [formField]="filters.search"
     />
     <select
-      aria-label="Filter"
-      class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30 sm:w-auto"
+      aria-label="Search in"
+      class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30 sm:w-auto"
       [formField]="filters.filter"
     >
-      @for (o of filterOptions; track o) {
-      <option [value]="o">{{ o }}</option>
+      @for (o of filterOptions; track o.value) {
+      <option [value]="o.value">{{ o.label }}</option>
       }
     </select>
-    <button
-      type="button"
-      class="inline-flex min-h-11 items-center justify-center rounded-[10px] border border-[#D9D9E8] bg-white px-5 text-sm font-bold text-[#0A0A3C] transition hover:bg-[#F6F6FA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A3C]"
+    <select
+      aria-label="Export as"
+      class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm font-bold text-[#0A0A3C] disabled:opacity-60 sm:w-auto"
+      [disabled]="exporting()"
+      (change)="onExportSelect($event)"
     >
-      Export
-    </button>
+      <option value="" selected>Export as…</option>
+      <option value="csv">CSV</option>
+      <option value="xlsx">Excel</option>
+      <option value="pdf">PDF</option>
+      <option value="docx">Word</option>
+    </select>
   </div>
 
-  <div class="overflow-x-auto">
-    <table class="w-full min-w-[720px] border-collapse">
+  @if (exportError()) {
+  <p role="alert" class="mb-3 text-sm font-semibold text-[#B42318]">{{ exportError() }}</p>
+  }
+
+  <div class="overflow-x-auto" [attr.aria-busy]="loading()">
+    <table
+      class="w-full min-w-[720px] border-collapse transition-opacity"
+      [class.opacity-50]="loading() && rows().length > 0"
+      [class.pointer-events-none]="loading()"
+    >
       <thead>
         <tr>
-          <th
-            scope="col"
-            class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]"
-          >
-            Time
-          </th>
-          <th
-            scope="col"
-            class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]"
-          >
-            Actor
-          </th>
-          <th
-            scope="col"
-            class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]"
-          >
-            Action
-          </th>
-          <th
-            scope="col"
-            class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]"
-          >
-            Entity
-          </th>
-          <th
-            scope="col"
-            class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]"
-          >
-            IP address
-          </th>
-          <th
-            scope="col"
-            class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]"
-          >
-            Result
-          </th>
+          <!-- same <th> classes as before -->
+          <th scope="col" class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]">Time</th>
+          <th scope="col" class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]">Actor</th>
+          <th scope="col" class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]">Action</th>
+          <th scope="col" class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]">Target</th>
+          <th scope="col" class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]">Result</th>
         </tr>
       </thead>
       <tbody>
-        @for (r of rows(); track r.id) {
+        @if (error()) {
+        <tr>
+          <td colspan="5" class="px-4 py-10 text-center text-sm text-[#B42318]">
+            {{ error() }}
+            <button type="button" class="ml-2 font-bold underline" (click)="reload()">Try again</button>
+          </td>
+        </tr>
+        } @else if (loading() && rows().length === 0) {
+        <tr><td colspan="5" class="px-4 py-10 text-center text-sm text-[#6B6B85]">Loading audit log…</td></tr>
+        } @else if (rows().length === 0) {
+        <tr>
+          <td colspan="5" class="px-4 py-10 text-center text-sm text-[#6B6B85]">
+            {{ isFiltered() ? "No records match your search." : "No audit records yet." }}
+            @if (isFiltered()) {
+            <button type="button" class="ml-2 font-bold underline" (click)="clearSearch()">Clear search</button>
+            }
+          </td>
+        </tr>
+        } @else { @for (r of rows(); track r.id) {
         <tr class="hover:bg-[#FAFAFD]">
           <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm whitespace-nowrap font-bold text-[#0A0A3C]">{{ r.time }}</td>
           <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]">{{ r.actor }}</td>
           <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]">{{ r.action }}</td>
           <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]">{{ r.entity }}</td>
-          <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]">{{ r.ip }}</td>
           <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]"><app-status-badge [status]="r.result" /></td>
         </tr>
-        }
+        } }
       </tbody>
     </table>
   </div>
 
   <div class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-[#6B6B85]">
-    <span>Showing 1–6 of 9,310</span>
-    <span class="flex gap-2">
+    <span>Showing {{ from() }}–{{ to() }} of {{ total().toLocaleString() }}</span>
+    <span class="flex flex-wrap items-center gap-2">
+      <select
+        aria-label="Rows per page"
+        class="min-h-11 rounded-[10px] border border-[#D9D9E8] bg-white px-3 text-sm text-[#14142B]"
+        [value]="pageSize()"
+        (change)="setPageSize($any($event.target).value)"
+      >
+        @for (s of pageSizes; track s) {
+        <option [value]="s">{{ s }}</option>
+        }
+      </select>
+      <span>Page {{ page() }} of {{ totalPages() }}</span>
       <button
         type="button"
-        class="inline-flex min-h-11 items-center justify-center rounded-[10px] border border-[#D9D9E8] bg-white px-5 text-sm font-bold text-[#0A0A3C] transition hover:bg-[#F6F6FA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A3C]"
+        class="inline-flex min-h-11 items-center justify-center rounded-[10px] border border-[#D9D9E8] bg-white px-5 text-sm font-bold text-[#0A0A3C] transition hover:bg-[#F6F6FA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A3C] disabled:cursor-not-allowed disabled:opacity-50"
+        [disabled]="!canPrev()"
+        (click)="prev()"
       >
         Previous
       </button>
       <button
         type="button"
-        class="inline-flex min-h-11 items-center justify-center rounded-[10px] border border-[#D9D9E8] bg-white px-5 text-sm font-bold text-[#0A0A3C] transition hover:bg-[#F6F6FA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A3C]"
+        class="inline-flex min-h-11 items-center justify-center rounded-[10px] border border-[#D9D9E8] bg-white px-5 text-sm font-bold text-[#0A0A3C] transition hover:bg-[#F6F6FA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A3C] disabled:cursor-not-allowed disabled:opacity-50"
+        [disabled]="!canNext()"
+        (click)="next()"
       >
         Next
       </button>

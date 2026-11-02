@@ -13,73 +13,64 @@
       User
       <select
         class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
-        [formField]="f.user"
+        [formField]="f.userId"
       >
         <option value="">Select…</option>
-        @for (o of userOptions; track o) {
-        <option [value]="o">{{ o }}</option>
+        @for (o of userOptions(); track o.id) {
+        <option [value]="o.id">{{ o.email }}</option>
         }
       </select>
-      @if (f.user().touched() && f.user().invalid()) {
-      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.user().errors()[0]?.message }}</span>
+      @if (f.userId().touched() && f.userId().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.userId().errors()[0]?.message }}</span>
       }
     </label>
     <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
       Application
       <select
         class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
-        [formField]="f.application"
+        [formField]="f.applicationId"
+        (change)="getRole($any($event.target).value)"
       >
         <option value="">Select…</option>
-        @for (o of applicationOptions; track o) {
-        <option [value]="o">{{ o }}</option>
+        @for (o of applicationOptions(); track o.id) {
+        <option [value]="o.id">{{ o.name }}</option>
         }
       </select>
-      @if (f.application().touched() && f.application().invalid()) {
-      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.application().errors()[0]?.message }}</span>
+      @if (f.applicationId().touched() && f.applicationId().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.applicationId().errors()[0]?.message }}</span>
       }
     </label>
     <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
       Role
       <select
         class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
-        [formField]="f.role"
+        [formField]="f.roleId"
       >
         <option value="">Select…</option>
-        @for (o of roleOptions; track o) {
-        <option [value]="o">{{ o }}</option>
+        @for (o of roleOptions(); track o.id) {
+        <option [value]="o.id">{{ o.name }}</option>
         }
       </select>
-      @if (f.role().touched() && f.role().invalid()) {
-      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.role().errors()[0]?.message }}</span>
+      @if (f.roleId().touched() && f.roleId().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.roleId().errors()[0]?.message }}</span>
       }
     </label>
     <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
-      Status
+      Country
       <select
         class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
-        [formField]="f.status"
+        [formField]="f.countryCode"
       >
         <option value="">Select…</option>
-        @for (o of statusOptions; track o) {
-        <option [value]="o">{{ o }}</option>
+        @for (o of countryCode(); track o.id) {
+        <option [value]="o.countryCode">{{ o.name }}</option>
         }
       </select>
-      @if (f.status().touched() && f.status().invalid()) {
-      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.status().errors()[0]?.message }}</span>
+      @if (f.countryCode().touched() && f.countryCode().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.countryCode().errors()[0]?.message }}</span>
       }
     </label>
-    <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
-      Access expires
-      <input
-        type="date"
-        class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
-        [formField]="f.accessExpires"
-      />
-      @if (f.accessExpires().touched() && f.accessExpires().invalid()) {
-      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.accessExpires().errors()[0]?.message }}</span>
-      }
-    </label>
+  
   </div>
 
   <div class="mt-8 flex flex-wrap justify-end gap-3 border-t border-[#EEEEF6] pt-6">

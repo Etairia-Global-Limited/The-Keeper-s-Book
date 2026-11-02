@@ -1,18 +1,15 @@
-import { Component, signal } from "@angular/core";
+import { Component, DestroyRef, inject, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import { FormField, form } from "@angular/forms/signals";
 import { PageHeader } from "../../shared/page-header";
 import { StatusBadge } from "../../shared/status-badge";
-
-interface UserRow {
-  id: string;
-  name: string;
-  email: string;
-  type: string;
-  mfa: string;
-  lastLogin: string;
-  status: string;
-}
+import { ErrorResponse, MetaResponse, PaginatedResponse, UserRow } from "../../constants/response.model";
+import { UserService } from "../../services/user/user-service";
+import { SearchPayload } from "../../constants/model";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { HttpErrorResponse } from "@angular/common/http";
+import { catchError, of } from "rxjs";
+import { isPaginatedResponse, isSuccessResponse, toErrorResponse } from "../../constants/schema";
 
 @Component({
   selector: "app-user-list",
@@ -20,62 +17,89 @@ interface UserRow {
   templateUrl: "./user-list.html",
 })
 export class UserList {
+  private service = inject(UserService);
+  private destroyRef = inject(DestroyRef);
   protected readonly filterOptions = ["All statuses", "Active", "Suspended", "Pending"];
 
   private readonly filterModel = signal({ search: "", filter: "All statuses" });
   protected readonly filters = form(this.filterModel);
 
   // TODO: replace the sample rows with your API data
-  protected readonly rows = signal<UserRow[]>([
-    {
-      id: "1",
-      name: "Amara Okafor",
-      email: "amara@alpha.com",
-      type: "Client user",
-      mfa: "Enabled",
-      lastLogin: "Today, 09:12",
-      status: "Active",
-    },
-    {
-      id: "2",
-      name: "Tunde Bello",
-      email: "tunde@beacon.com",
-      type: "Client user",
-      mfa: "Enabled",
-      lastLogin: "Yesterday",
-      status: "Active",
-    },
-    {
-      id: "3",
-      name: "Chioma Nwosu",
-      email: "chioma@etairia.com",
-      type: "Staff",
-      mfa: "Enabled",
-      lastLogin: "Today, 07:58",
-      status: "Active",
-    },
-    {
-      id: "4",
-      name: "Ibrahim Sani",
-      email: "ibrahim@delta.com",
-      type: "Client user",
-      mfa: "Not set",
-      lastLogin: "5 days ago",
-      status: "Suspended",
-    },
-    { id: "5", name: "Zainab Musa", email: "zainab@alpha.com", type: "Client user", mfa: "Not set", lastLogin: "Never", status: "Pending" },
-    {
-      id: "6",
-      name: "Grace Mensah",
-      email: "grace@crestline.com",
-      type: "Client user",
-      mfa: "Enabled",
-      lastLogin: "3 days ago",
-      status: "Active",
-    },
-  ]);
+  protected readonly rows = signal<UserRow[]>([]);
+
+ meta = signal<MetaResponse>({
+    total: 0,
+    page: 0,
+    pageSize:0,
+    totalPages: 0
+  })
+
+  ngOnInit():void{
+    const payload: SearchPayload = {
+      page: 1,
+      pageSize: 10,
+      sortBy: "",
+      sortOrder: '',
+      filter: '',
+      keyword:''
+    }
+    this.search(payload)
+  }
+
+  search(payload: SearchPayload){
+    this.service.search(payload).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      catchError((err: HttpErrorResponse) => of<ErrorResponse>({
+        statusCode: err.status || 500,
+      message: err.error?.message ?? 'Something went wrong. Please try again.',
+      error: err.error
+      }))
+    ).subscribe((response) => {
+      if(isPaginatedResponse(response)){
+        console.log('Response: ', response.data)
+        this.rows.set(response.data)
+        this.meta.set(response.meta)
+      }
+    })
+  }
 
   protected suspend(row: UserRow) {
-    // TODO: call your service for "Suspend" on row.id
+    this.service.deactivate({id: row.id}).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      catchError((toErrorResponse))
+    ).subscribe((response) => {
+      if(isSuccessResponse(response)){
+        const payload: SearchPayload = {
+      page: 1,
+      pageSize: 10,
+      sortBy: "",
+      sortOrder: '',
+      filter: '',
+      keyword:''
+    }
+    this.search(payload)
+      }
+    })
   }
+  
+  protected restore(row: UserRow) {
+    this.service.activate({id: row.id}).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      catchError((toErrorResponse))
+    ).subscribe((response) => {
+      if(isSuccessResponse(response)){
+        const payload: SearchPayload = {
+      page: 1,
+      pageSize: 10,
+      sortBy: "",
+      sortOrder: '',
+      filter: '',
+      keyword:''
+    }
+    this.search(payload)
+      }
+    })
+  }
+
 }
+

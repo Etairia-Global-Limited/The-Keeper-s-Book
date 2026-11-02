@@ -1,8 +1,12 @@
-import { Component, computed, input, signal } from "@angular/core";
+import { Component, computed, DestroyRef, inject, input, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import { FormField, form, required } from "@angular/forms/signals";
 import { PageHeader } from "../../shared/page-header";
 import { StatusBadge } from "../../shared/status-badge";
+import { KycService } from "../../services/kyc/kyc-service";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { catchError } from "rxjs";
+import { isApiResponse, toErrorResponse } from "../../constants/schema";
 
 type KycStatus = "Approved" | "Pending" | "Rejected" | "Resubmit";
 
@@ -23,54 +27,45 @@ interface KycDocument {
 export class UserKyc {
   /** The :id route param (needs withComponentInputBinding()). */
   readonly id = input<string>();
+  private service = inject(KycService);
+  private destroyRef = inject(DestroyRef)
 
   // TODO: replace with the user + documents from your API
   protected readonly user = { name: "Amara Okafor", email: "amara@alpha.com", client: "Alpha Holdings" };
 
-  protected readonly docs = signal<KycDocument[]>([
-    {
-      title: "National ID card",
-      category: "Identity",
-      submitted: "14 Oct 2026",
-      file: "national-id-front.jpg",
-      status: "Approved",
-      details: [
-        { label: "Country", value: "Nigeria" },
-        { label: "Document no.", value: "•••• 4821" },
-        { label: "Expires", value: "12 Aug 2029" },
-        { label: "Date of birth", value: "04 May 1990" },
-      ],
-    },
-    {
-      title: "Proof of address",
-      category: "Address",
-      submitted: "14 Oct 2026",
-      file: "utility-bill-sep-2026.pdf",
-      status: "Pending",
-      details: [
-        { label: "Country", value: "Nigeria" },
-        { label: "Document type", value: "Utility bill" },
-        { label: "Issued", value: "Sep 2026" },
-        { label: "Address", value: "Lagos" },
-      ],
-    },
-    {
-      title: "Selfie with ID",
-      category: "Identity",
-      submitted: "15 Oct 2026",
-      file: "selfie-with-id.jpg",
-      status: "Pending",
-      details: [
-        { label: "Country", value: "Nigeria" },
-        { label: "Captured", value: "15 Oct 2026" },
-        { label: "Device", value: "Mobile" },
-        { label: "Face match", value: "Pending review" },
-      ],
-    },
-  ]);
+  protected readonly docs = signal<KycDocument[]>([]);
 
   protected readonly selected = signal(0);
   protected readonly current = computed(() => this.docs()[this.selected()]);
+
+        ngOnInit(): void {
+  const id = this.id();
+  if ( id) {
+    this.loadOwner(id);
+  }
+}
+
+  private loadOwner(id: string) {
+    this.service.getUserReview(id)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        catchError(toErrorResponse),
+      )
+      .subscribe((response) => {
+        if (isApiResponse(response)) {
+          // adjust to your response shape
+          const app = (response as any).data;
+          console.log('App: ', app)
+    //       this.model.set({
+    //         applicationId: app.applicationId,
+    // userId: app.userId,
+    // roleId: app.roleId,
+    // countryCode: app.countryCode,
+    //       });
+          
+        }
+      });
+  }
 
   protected readonly overall = computed(() => {
     const s = this.docs().map((d) => d.status);

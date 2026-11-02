@@ -44,65 +44,86 @@
       }
     </label>
     <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
-      Phone
+      Username
       <input
         type="text"
-        placeholder="Phone"
+        placeholder="Username"
         class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
-        [formField]="f.phone"
+        [formField]="f.username"
       />
-      @if (f.phone().touched() && f.phone().invalid()) {
-      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.phone().errors()[0]?.message }}</span>
+      @if (f.username().touched() && f.username().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.username().errors()[0]?.message }}</span>
       }
     </label>
     <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
-      Type
-      <select
+      Phone Number
+      <input
+        type="text"
+        placeholder="Phone Number"
         class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
-        [formField]="f.type"
-      >
-        <option value="">Select…</option>
-        @for (o of typeOptions; track o) {
-        <option [value]="o">{{ o }}</option>
-        }
-      </select>
-      @if (f.type().touched() && f.type().invalid()) {
-      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.type().errors()[0]?.message }}</span>
+        [formField]="f.phoneNumber"
+      />
+      @if (f.phoneNumber().touched() && f.phoneNumber().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.phoneNumber().errors()[0]?.message }}</span>
       }
     </label>
     <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
-      Client
+      Application
       <select
         class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
-        [formField]="f.client"
+        (change)="getRole($any($event.target).value)"
+        [formField]="f.applicationId"
       >
-        <option value="">Select…</option>
-        @for (o of clientOptions; track o) {
-        <option [value]="o">{{ o }}</option>
+        <option value="">Select Application…</option>
+        @for (o of application(); track o.id) {
+        <option [value]="o.id">{{ o.name }}</option>
         }
       </select>
-      @if (f.client().touched() && f.client().invalid()) {
-      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.client().errors()[0]?.message }}</span>
+      @if (f.applicationId().touched() && f.applicationId().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.applicationId().errors()[0]?.message }}</span>
       }
     </label>
     <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
-      Status
+      Application Role 
       <select
         class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
-        [formField]="f.status"
+        [formField]="f.roleId"
       >
-        <option value="">Select…</option>
-        @for (o of statusOptions; track o) {
-        <option [value]="o">{{ o }}</option>
+        <option value="">Select Role…</option>
+        @for (o of role(); track o.id) {
+        <option [value]="o.id">{{ o.name }}</option>
         }
       </select>
-      @if (f.status().touched() && f.status().invalid()) {
-      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.status().errors()[0]?.message }}</span>
+      @if (f.roleId().touched() && f.roleId().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.roleId().errors()[0]?.message }}</span>
       }
     </label>
-    <label class="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm font-semibold md:col-span-2">
-      <input type="checkbox" class="size-4 accent-[#F28C1B]" [formField]="f.requireMfa" />
-      Require multi-factor authentication
+    <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B]">
+      Country
+      <select
+        class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
+        [formField]="f.countryCode"
+      >
+        <option value="">Select Country…</option>
+        @for (o of country(); track o.id) {
+        <option [value]="o.countryCode">{{ o.name }}</option>
+        }
+      </select>
+      @if (f.countryCode().touched() && f.countryCode().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.countryCode().errors()[0]?.message }}</span>
+      }
+    </label>
+        <label class="flex flex-col gap-1.5 text-[13px] font-semibold text-[#14142B] md:col-span-2">
+      Address
+      <textarea
+        rows="4"
+        placeholder="Address"
+        class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30 py-3"
+        [formField]="f.address"
+      ></textarea>
+      @if (f.address().touched() && f.address().invalid()) {
+      <span class="text-xs font-medium text-[#B3261E]" role="alert">{{ f.address().errors()[0]?.message }}</span>
+      }
     </label>
   </div>
 
@@ -116,7 +137,7 @@
       type="submit"
       class="inline-flex min-h-11 items-center justify-center rounded-[10px] bg-[#F28C1B] px-5 text-sm font-extrabold text-[#0A0A3C] transition hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(242,140,27,.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A3C]"
     >
-      {{ isEdit() ? 'Save changes' : 'Create' }}
+      Create
     </button>
   </div>
 </form>

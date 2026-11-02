@@ -1,18 +1,15 @@
-import { Component, signal } from "@angular/core";
+import { Component, DestroyRef, inject, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import { FormField, form } from "@angular/forms/signals";
 import { PageHeader } from "../../shared/page-header";
 import { StatusBadge } from "../../shared/status-badge";
-
-interface ApplicationUserRow {
-  id: string;
-  user: string;
-  email: string;
-  application: string;
-  role: string;
-  lastAccess: string;
-  status: string;
-}
+import { ApiResponse, ApplicationUserRow, ErrorResponse, MetaResponse, PaginatedResponse } from "../../constants/response.model";
+import { ApplicationService } from "../../services/application/application-service";
+import { ApplicationUserService } from "../../services/application-user/application-user-service";
+import { SearchPayload } from "../../constants/model";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { catchError, of } from "rxjs";
+import { HttpErrorResponse } from "@angular/common/http";
 
 @Component({
   selector: "app-application-user-list",
@@ -20,68 +17,72 @@ interface ApplicationUserRow {
   templateUrl: "./application-user-list.html",
 })
 export class ApplicationUserList {
-  protected readonly filterOptions = ["All applications", "Customer Portal", "FormField Operations", "Partner Hub"];
+  private appService = inject(ApplicationService);
+  private service = inject(ApplicationUserService);
+  private destroyRef = inject(DestroyRef);
+
+  protected readonly filterOptions = signal<any[]>([]);
 
   private readonly filterModel = signal({ search: "", filter: "All applications" });
   protected readonly filters = form(this.filterModel);
 
   // TODO: replace the sample rows with your API data
-  protected readonly rows = signal<ApplicationUserRow[]>([
-    {
-      id: "1",
-      user: "Amara Okafor",
-      email: "amara@alpha.com",
-      application: "Customer Portal",
-      role: "Administrator",
-      lastAccess: "Today, 09:12",
-      status: "Active",
-    },
-    {
-      id: "2",
-      user: "Tunde Bello",
-      email: "tunde@beacon.com",
-      application: "FormField Operations",
-      role: "Supervisor",
-      lastAccess: "Yesterday",
-      status: "Active",
-    },
-    {
-      id: "3",
-      user: "Grace Mensah",
-      email: "grace@crestline.com",
-      application: "Partner Hub",
-      role: "Manager",
-      lastAccess: "3 days ago",
-      status: "Active",
-    },
-    {
-      id: "4",
-      user: "Ifeanyi Eze",
-      email: "ifeanyi@delta.com",
-      application: "Reports Studio",
-      role: "Viewer",
-      lastAccess: "2 weeks ago",
-      status: "Inactive",
-    },
-    {
-      id: "5",
-      user: "Zainab Musa",
-      email: "zainab@alpha.com",
-      application: "Billing Console",
-      role: "Auditor",
-      lastAccess: "Today, 08:40",
-      status: "Pending",
-    },
-    {
-      id: "6",
-      user: "Daniel Adeyemi",
-      email: "daniel@beacon.com",
-      application: "Support Desk",
-      role: "Agent",
-      lastAccess: "Today, 10:05",
-      status: "Active",
-    },
-  ]);
+  protected readonly rows = signal<ApplicationUserRow[]>([]);
+
+   meta = signal<MetaResponse>({
+      total: 0,
+      page: 0,
+      pageSize:0,
+      totalPages: 0
+    })
+
+     ngOnInit():void{
+    const payload: SearchPayload = {
+      page: 1,
+      pageSize: 10,
+      sortBy: "",
+      sortOrder: '',
+      filter: '',
+      keyword:''
+    }
+    this.search(payload)
+    this.getApp()
+  }
+
+  search(payload: SearchPayload){
+    const isApiResponse = (r: PaginatedResponse<ApplicationUserRow[]> | ErrorResponse): r is PaginatedResponse<any> => r.statusCode === 200
+    this.service.search(payload).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      catchError((err: HttpErrorResponse) => of<ErrorResponse>({
+        statusCode: err.status || 500,
+      message: err.error?.message ?? 'Something went wrong. Please try again.',
+      error: err.error
+      }))
+    ).subscribe((response) => {
+      if(isApiResponse(response)){
+        console.log('Response: ', response.data)
+        this.rows.set(response.data)
+      }
+    })
+  }
+
+  getApp(){
+     const isApiResponse = (r: ApiResponse<any> | ErrorResponse): r is PaginatedResponse<any> => r.statusCode === 200
+    this.appService.getAll().pipe(
+      takeUntilDestroyed(this.destroyRef),
+      catchError((err: HttpErrorResponse) => of<ErrorResponse>({
+        statusCode: err.status || 500,
+      message: err.error?.message ?? 'Something went wrong. Please try again.',
+      error: err.error
+      }))
+    ).subscribe((response) => {
+      if(isApiResponse(response)){
+        console.log('Response: ', response.data)
+        this.filterOptions.set(response.data)
+        // this.meta.set(response.meta)
+      }
+    })
+  }
 
   protected revoke(row: ApplicationUserRow) {
     // TODO: call your service for "Revoke" on row.id

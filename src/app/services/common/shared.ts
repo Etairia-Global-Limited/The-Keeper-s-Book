@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { decrypt, encrypt } from '../../constants/utility';
 import { EncryptionService } from '../encryption/encryption';
+import { PasswordOptions } from '../../constants/model';
 
 @Injectable({
   providedIn: 'root',
@@ -41,5 +42,53 @@ export class SharedState {
     const merged = { ...existing, ...patch };
     const encryptData = await encrypt(merged, this.service.getAESKey());
     sessionStorage.setItem(this.prefix + id, encryptData);
+  }
+
+   private readonly sets = {
+    lowercase: 'abcdefghijklmnopqrstuvwxyz',
+    uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    numbers: '0123456789',
+    symbols: '!@#$%^&*()-_=+[]{};:,.?',
+  };
+
+  generate(options: PasswordOptions): string {
+    const selected = (Object.keys(this.sets) as (keyof typeof this.sets)[])
+      .filter((key) => options[key])
+      .map((key) => this.sets[key]);
+
+    if (selected.length === 0) {
+      throw new Error('Select at least one character type.');
+    }
+    if (options.length < selected.length) {
+      throw new Error('Length is too short for the selected character types.');
+    }
+
+    const all = selected.join('');
+
+    // Guarantee at least one character from each selected set
+    const chars: string[] = selected.map((set) => set[this.randomInt(set.length)]);
+
+    // Fill the remaining length from the combined pool
+    while (chars.length < options.length) {
+      chars.push(all[this.randomInt(all.length)]);
+    }
+
+    // Shuffle so the guaranteed characters aren't always first
+    for (let i = chars.length - 1; i > 0; i--) {
+      const j = this.randomInt(i + 1);
+      [chars[i], chars[j]] = [chars[j], chars[i]];
+    }
+
+    return chars.join('');
+  }
+
+  /** Unbiased random integer in [0, max) */
+  private randomInt(max: number): number {
+    const limit = Math.floor(0x100000000 / max) * max;
+    const buf = new Uint32Array(1);
+    do {
+      crypto.getRandomValues(buf);
+    } while (buf[0] >= limit);
+    return buf[0] % max;
   }
 }

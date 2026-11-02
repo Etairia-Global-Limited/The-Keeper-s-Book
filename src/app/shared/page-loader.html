@@ -1,0 +1,22 @@
+<div
+  role="status"
+  aria-live="polite"
+  [attr.aria-label]="label()"
+  [attr.aria-hidden]="!visible()"
+  class="z-50 flex flex-col items-center justify-center gap-4 p-4 font-['Plus_Jakarta_Sans',sans-serif] backdrop-blur-sm transition-[opacity,visibility] duration-300"
+  [class]="overlayClass()"
+>
+  <!-- Ring with orbiting dot -->
+  <div class="relative size-14 rounded-full border-[3px] border-[#F28C1B]/25 sm:size-16">
+    <div class="absolute -inset-[3px] animate-[spin_1.4s_linear_infinite] motion-reduce:animate-none">
+      <i class="absolute -top-[5px] left-1/2 -ml-[5px] size-2.5 rounded-full bg-[#F28C1B] shadow-[0_0_14px_3px_rgba(242,140,27,.65)]"></i>
+    </div>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="h-1 w-32 overflow-hidden rounded-full bg-[#F28C1B]/20 sm:w-40" aria-hidden="true">
+    <div class="h-full w-2/3 animate-pulse rounded-full bg-[#F28C1B] motion-reduce:animate-none"></div>
+  </div>
+
+  <span class="text-xs font-bold uppercase tracking-[.14em] sm:text-[13px]">{{ label() }}</span>
+</div>

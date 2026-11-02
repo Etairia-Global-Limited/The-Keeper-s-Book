@@ -21,6 +21,7 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
  
 const BASE_URL = process.env['BASE_URL'];
 const CLIENT_NAME = process.env['CLIENT_ID'] ?? '';
+const GATEWAY_SECRET= process.env['GATEWAY_SECRET'] ?? 'sk_I5rptCczu1YXNHOCvlWAwzGYyzIvcb4IVGVgWJxaFQOIWFePOcFFQUKOLfkK3g1d'
 const CLIENT_SECRET = process.env['CLIENT_SECRET'] ?? '';
 const dev = process.env['DEV'] === 'true';
 const IS_DEV_ENV = process.env['ENV'] === 'dev';
@@ -75,6 +76,7 @@ const readToken = (req: Request): string | undefined =>
 const backendHeaders = (req: Request): Record<string, string> => ({
   name: CLIENT_NAME,
   key: CLIENT_SECRET,
+  GATEWAY_SECRET: GATEWAY_SECRET,
   'x-client-type': 'mobile',
   'x-client-user-agent': req.headers['user-agent'] ?? '',
   'x-forwarded-for': req.ip ?? '',
@@ -194,6 +196,30 @@ const ensureSession = async (req: Request, res: Response): Promise<Session> => {
   return { ok: true, payload: verified.payload };
 };
 
+//Is Attachment Function
+const isAttachment = (headers: Record<string, any>): boolean =>
+  /attachment/i.test(String(headers['content-disposition'] ?? ''));
+
+function filenameFrom(disposition = ''): string {
+  const star = /filename\*=(?:UTF-8'')?([^;]+)/i.exec(disposition);
+  if (star) {
+    try {
+      return decodeURIComponent(star[1].trim().replace(/^"|"$/g, ''));
+    } catch { /* fall through */ }
+  }
+  return /filename="?([^";]+)"?/i.exec(disposition)?.[1] ?? 'download';
+}
+
+// With responseType 'arraybuffer', JSON and error bodies arrive as Buffers too
+function parseBody(raw: unknown, contentType = ''): unknown {
+  const text = Buffer.from(raw as any).toString('utf8');
+  if (!text) return null;
+  if (/json/i.test(contentType)) {
+    try { return JSON.parse(text); } catch { /* fall through */ }
+  }
+  return text;
+}
+
 const app = express()
 
 app.use(express.json({ limit: '5mb'}));
@@ -302,15 +328,30 @@ app.all('/nexus/*splat', requireSeal, requireApiSession, async (req, res): Promi
       params: req.query,
       data,
       headers,
+      responseType: 'arraybuffer', // always; JSON is parsed manually below
     });
 
-    if (api === '/auth/login' && response.data.access_token) {
-  //     access_token: string;
-  // refresh_token: string;
-  // username: string;
-  // userId: string;
-  // roleId: string;
-     setSession(res, response.data.access_token, response.data.refresh_token)
+    const contentType = String(response.headers['content-type'] ?? '');
+    let body: unknown;
+
+    if (isAttachment(response.headers)) {
+      const raw = Buffer.from(response.data);
+      const name = filenameFrom(String(response.headers['content-disposition']));
+      body = {
+        __file: true,
+        name,
+        type: contentType.split(';')[0] || 'application/octet-stream',
+        data: raw.toString('base64'),
+      };
+      console.log('API Response:', response.status, `[file ${name}, ${raw.length} bytes]`);
+    } else {
+      body = parseBody(response.data || response.data.message, contentType);
+      console.log('API Response:', response.status, body);
+    }
+
+    if (api === '/auth/login' && (body as any)?.access_token) {
+      const { access_token, refresh_token } = body as any;
+      setSession(res, access_token, refresh_token);
     }
 
     // if (key) {
@@ -319,11 +360,13 @@ app.all('/nexus/*splat', requireSeal, requireApiSession, async (req, res): Promi
     // }
 
     // return res.status(response.status).json(response.data);
-    res.status(response.status).json({ data: await encrypt(response.data || response.data.message, key) });
+    res.status(response.status).json({ data: await encrypt(body ?? {}, key) });
   } catch (error: any) {
     console.error('Error: ', error.message);
     const status = error?.response?.status || 500;
-    const data = error?.response?.data || 'Proxy error';
+     const data = error?.response?.data
+      ? parseBody(error.response.data, error.response.headers?.['content-type'])
+      : 'Proxy error';
     res.status(status).json(data);
   }
 });

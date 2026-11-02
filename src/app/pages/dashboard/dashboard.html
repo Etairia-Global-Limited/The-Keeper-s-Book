@@ -6,8 +6,10 @@
   >
 </app-page-header>
 
+<app-page-loader [visible]="loading()" />
+
 <div class="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-  @for (k of kpis; track k.label) {
+  @for (k of kpis(); track k.label) {
   <div class="rounded-2xl border border-[#E6E6F0] bg-white p-6 shadow-sm">
     <div class="text-[13px] font-semibold text-[#6B6B85]">{{ k.label }}</div>
     <div class="mt-2 text-[32px] font-extrabold tracking-tight text-[#0A0A3C]">{{ k.value }}</div>
@@ -19,7 +21,7 @@
   <section class="rounded-2xl border border-[#E6E6F0] bg-white p-6 shadow-sm">
     <h2 class="mb-6 text-base font-extrabold text-[#0A0A3C]">Sign-ins, last 7 days</h2>
     <div class="flex h-48 items-end gap-3" role="img" aria-label="Bar chart of sign-ins for the last 7 days">
-      @for (b of bars; track $index) {
+      @for (b of bars(); track $index) {
       <div class="flex-1 rounded-t-md" [class]="b.dim ? 'bg-[#F7B25E]/50' : 'bg-[#F28C1B]'" [style.height.%]="b.h"></div>
       }
     </div>
@@ -28,7 +30,7 @@
   <section class="rounded-2xl border border-[#E6E6F0] bg-white p-6 shadow-sm">
     <h2 class="mb-2 text-base font-extrabold text-[#0A0A3C]">Recent activity</h2>
     <ul>
-      @for (e of events; track $index) {
+      @for (e of events(); track $index) {
       <li class="flex items-center justify-between gap-3 border-b border-[#EEEEF6] py-3 text-sm last:border-b-0">
         <span><b class="font-bold text-[#0A0A3C]">{{ e.actor }}</b> {{ e.action }}</span>
         <app-status-badge [status]="e.result" />
