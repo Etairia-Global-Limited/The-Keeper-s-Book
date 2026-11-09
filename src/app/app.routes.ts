@@ -3,60 +3,127 @@ import { AdminShell } from './layout/admin-shell';
 import { authGuard } from './services/auth/auth.guard';
 
 export const routes: Routes = [
-  { path: "", pathMatch: "full", redirectTo: "sign-in" },
-  { path: "sign-in", loadComponent: () => import("./pages/login/login").then((m) => m.Login) },
+  { path: '', pathMatch: 'full', redirectTo: 'sign-in' },
+  { path: 'sign-in', loadComponent: () => import('./pages/login/login').then((m) => m.Login) },
   {
-    path: "",
+    path: '',
     component: AdminShell,
     canActivate: [authGuard],
     children: [
-      { path: "dashboard", loadComponent: () => import("./pages/dashboard/dashboard").then((m) => m.Dashboard) },
-      { path: "applications", loadComponent: () => import("./pages/applications/application-list").then((m) => m.ApplicationList) },
-      { path: "applications/new", loadComponent: () => import("./pages/applications/application-form").then((m) => m.ApplicationForm) },
       {
-        path: "applications/:id/edit",
-        data: { mode: "edit" },
-        loadComponent: () => import("./pages/applications/application-form").then((m) => m.ApplicationForm),
+        path: 'dashboard',
+        loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.Dashboard),
       },
       {
-        path: "application-users",
-        loadComponent: () => import("./pages/application-users/application-user-list").then((m) => m.ApplicationUserList),
+        path: 'applications',
+        loadComponent: () =>
+          import('./pages/applications/application-list').then((m) => m.ApplicationList),
       },
       {
-        path: "application-users/new",
-        loadComponent: () => import("./pages/application-users/application-user-form").then((m) => m.ApplicationUserForm),
+        path: 'applications/new',
+        loadComponent: () =>
+          import('./pages/applications/application-form').then((m) => m.ApplicationForm),
       },
       {
-        path: "application-users/:id/edit",
-        data: { mode: "edit" },
-        loadComponent: () => import("./pages/application-users/application-user-form").then((m) => m.ApplicationUserForm),
+        path: 'applications/:id/edit',
+        data: { mode: 'edit' },
+        loadComponent: () =>
+          import('./pages/applications/application-form').then((m) => m.ApplicationForm),
       },
       {
-        path: "application-roles",
-        loadComponent: () => import("./pages/application-roles/application-role-list").then((m) => m.ApplicationRoleList),
+        path: 'application-users',
+        loadComponent: () =>
+          import('./pages/application-users/application-user-list').then(
+            (m) => m.ApplicationUserList,
+          ),
       },
       {
-        path: "application-roles/new",
-        loadComponent: () => import("./pages/application-roles/application-role-form").then((m) => m.ApplicationRoleForm),
+        path: 'application-users/new',
+        loadComponent: () =>
+          import('./pages/application-users/application-user-form').then(
+            (m) => m.ApplicationUserForm,
+          ),
       },
       {
-        path: "application-roles/:id/edit",
-        data: { mode: "edit" },
-        loadComponent: () => import("./pages/application-roles/application-role-form").then((m) => m.ApplicationRoleForm),
+        path: 'application-users/:id/edit',
+        data: { mode: 'edit' },
+        loadComponent: () =>
+          import('./pages/application-users/application-user-form').then(
+            (m) => m.ApplicationUserForm,
+          ),
       },
-      { path: "users", loadComponent: () => import("./pages/users/user-list").then((m) => m.UserList) },
-      { path: "users/new", loadComponent: () => import("./pages/users/user-form").then((m) => m.UserForm) },
-      { path: "users/:id/edit", data: { mode: "edit" }, loadComponent: () => import("./pages/users/user-form").then((m) => m.UserForm) },
-      { path: "application-users/:id/kyc", loadComponent: () => import("./pages/users/user-kyc").then((m) => m.UserKyc) },
-      { path: "clients", loadComponent: () => import("./pages/clients/client-list").then((m) => m.ClientList) },
-      { path: "clients/new", loadComponent: () => import("./pages/clients/client-form").then((m) => m.ClientForm) },
       {
-        path: "clients/:id/edit",
-        data: { mode: "edit" },
-        loadComponent: () => import("./pages/clients/client-form").then((m) => m.ClientForm),
+        path: 'application-roles',
+        loadComponent: () =>
+          import('./pages/application-roles/application-role-list').then(
+            (m) => m.ApplicationRoleList,
+          ),
       },
-      { path: "audit-log", loadComponent: () => import("./pages/audit-log/audit-log").then((m) => m.AuditLog) },
+      {
+        path: 'application-roles/new',
+        loadComponent: () =>
+          import('./pages/application-roles/application-role-form').then(
+            (m) => m.ApplicationRoleForm,
+          ),
+      },
+      {
+        path: 'application-roles/:id/edit',
+        data: { mode: 'edit' },
+        loadComponent: () =>
+          import('./pages/application-roles/application-role-form').then(
+            (m) => m.ApplicationRoleForm,
+          ),
+      },
+      {
+        path: 'users',
+        loadComponent: () => import('./pages/users/user-list').then((m) => m.UserList),
+      },
+      {
+        path: 'users/new',
+        loadComponent: () => import('./pages/users/user-form').then((m) => m.UserForm),
+      },
+      {
+        path: 'users/:id/edit',
+        data: { mode: 'edit' },
+        loadComponent: () => import('./pages/users/user-form').then((m) => m.UserForm),
+      },
+      {
+        path: 'application-users/:id/kyc',
+        loadComponent: () => import('./pages/users/user-kyc').then((m) => m.UserKyc),
+      },
+      {
+        path: 'clients',
+        loadComponent: () => import('./pages/clients/client-list').then((m) => m.ClientList),
+      },
+      {
+        path: 'clients/new',
+        loadComponent: () => import('./pages/clients/client-form').then((m) => m.ClientForm),
+      },
+
+      {
+        path: 'application-clients',
+        loadComponent: () =>
+          import('./pages/application-client-list/application-client-list').then(
+            (m) => m.ApplicationClientList,
+          ),
+      },
+      {
+        path: 'application-clients/new',
+        loadComponent: () =>
+          import('./pages/application-client-form/application-client-form').then(
+            (m) => m.ApplicationClientForm,
+          ),
+      },
+      {
+        path: 'clients/:id/edit',
+        data: { mode: 'edit' },
+        loadComponent: () => import('./pages/clients/client-form').then((m) => m.ClientForm),
+      },
+      {
+        path: 'audit-log',
+        loadComponent: () => import('./pages/audit-log/audit-log').then((m) => m.AuditLog),
+      },
     ],
   },
-  { path: "**", redirectTo: "sign-in" },
+  { path: '**', redirectTo: 'sign-in' },
 ];

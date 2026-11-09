@@ -103,7 +103,6 @@ export interface PasswordOptions {
   symbols: boolean;
 }
 
-
 export interface SignInDay {
   date: string; // 'YYYY-MM-DD' (UTC)
   total: number;
@@ -126,4 +125,10 @@ export interface DashboardData {
   failedLogin24h: number;
   signInChart: SignInDay[];
   recentActivities: AuditActivity[];
+}
+
+export interface CreateApplicationClientPayload {
+  clientId: string;
+  description: string;
+  applicationId: string;
 }

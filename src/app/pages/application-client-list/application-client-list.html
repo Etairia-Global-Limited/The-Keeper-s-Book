@@ -1,0 +1,166 @@
+<app-page-header
+  heading="Application clients"
+  subtitle="Client credentials issued to your applications."
+>
+  <a
+    routerLink="/application-clients/new"
+    class="inline-flex min-h-11 items-center justify-center rounded-[10px] bg-[#F28C1B] px-5 text-sm font-extrabold text-[#0A0A3C] transition hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(242,140,27,.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A3C]"
+    >New client</a
+  >
+</app-page-header>
+
+<section class="rounded-2xl border border-[#E6E6F0] bg-white p-6 shadow-sm">
+  <div class="mb-4 flex flex-wrap gap-3">
+    <input
+      type="search"
+      aria-label="Search"
+      placeholder="Search application clients"
+      class="min-h-11 w-full min-w-56 flex-1 rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] placeholder:text-[#9A9AB5] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30"
+      [formField]="filters.search"
+    />
+    <select
+      aria-label="Search in"
+      class="min-h-11 w-full rounded-[10px] border border-[#D9D9E8] bg-white px-3.5 text-sm text-[#14142B] focus:border-[#F28C1B] focus:outline-none focus:ring-2 focus:ring-[#F28C1B]/30 sm:w-auto"
+      [formField]="filters.filter"
+    >
+      @for (o of filterOptions; track o.value) {
+        <option [value]="o.value">{{ o.label }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="overflow-x-auto" [attr.aria-busy]="loading()">
+    <table
+      class="w-full min-w-[720px] border-collapse transition-opacity"
+      [class.opacity-50]="loading() && rows().length > 0"
+      [class.pointer-events-none]="loading()"
+    >
+      <thead>
+        <tr>
+          <th
+            scope="col"
+            class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]"
+          >
+            Client ID
+          </th>
+          <th
+            scope="col"
+            class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]"
+          >
+            Client Secret
+          </th>
+          <th
+            scope="col"
+            class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]"
+          >
+            Application
+          </th>
+          <th
+            scope="col"
+            class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]"
+          >
+            Description
+          </th>
+          <th
+            scope="col"
+            class="whitespace-nowrap border-b border-[#E6E6F0] px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-[#6B6B85]"
+          >
+            Created
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (error()) {
+          <tr>
+            <td colspan="4" class="px-4 py-10 text-center text-sm text-[#B42318]">
+              {{ error() }}
+              <button type="button" class="ml-2 font-bold underline" (click)="reload()">
+                Try again
+              </button>
+            </td>
+          </tr>
+        } @else if (loading() && rows().length === 0) {
+          <tr>
+            <td colspan="4" class="px-4 py-10 text-center text-sm text-[#6B6B85]">
+              Loading application clients…
+            </td>
+          </tr>
+        } @else if (rows().length === 0) {
+          <tr>
+            <td colspan="4" class="px-4 py-10 text-center text-sm text-[#6B6B85]">
+              {{ isFiltered() ? 'No clients match your search.' : 'No application clients yet.' }}
+              @if (isFiltered()) {
+                <button type="button" class="ml-2 font-bold underline" (click)="clearSearch()">
+                  Clear search
+                </button>
+              } @else {
+                <a routerLink="/application-clients/new" class="ml-2 font-bold underline"
+                  >Create one</a
+                >
+              }
+            </td>
+          </tr>
+        } @else {
+          @for (r of rows(); track r.id) {
+            <tr class="hover:bg-[#FAFAFD]">
+              <td
+                class="whitespace-nowrap border-b border-[#EEEEF6] px-4 py-3.5 text-sm font-bold text-[#0A0A3C]"
+              >
+                {{ r.clientId }}
+              </td>
+              <td
+                class="whitespace-nowrap border-b border-[#EEEEF6] px-4 py-3.5 text-sm font-bold text-[#0A0A3C]"
+              >
+                {{ r.secret }}
+              </td>
+              <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]">
+                {{ r.application }}
+              </td>
+              <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]">
+                {{ r.description }}
+              </td>
+              <td
+                class="whitespace-nowrap border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]"
+              >
+                {{ r.created }}
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-[#6B6B85]">
+    <span>Showing {{ from() }}–{{ to() }} of {{ total().toLocaleString() }}</span>
+    <span class="flex flex-wrap items-center gap-2">
+      <select
+        aria-label="Rows per page"
+        class="min-h-11 rounded-[10px] border border-[#D9D9E8] bg-white px-3 text-sm text-[#14142B]"
+        [value]="pageSize()"
+        (change)="setPageSize($any($event.target).value)"
+      >
+        @for (s of pageSizes; track s) {
+          <option [value]="s">{{ s }}</option>
+        }
+      </select>
+      <span>Page {{ page() }} of {{ totalPages() }}</span>
+      <button
+        type="button"
+        class="inline-flex min-h-11 items-center justify-center rounded-[10px] border border-[#D9D9E8] bg-white px-5 text-sm font-bold text-[#0A0A3C] transition hover:bg-[#F6F6FA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A3C] disabled:cursor-not-allowed disabled:opacity-50"
+        [disabled]="!canPrev()"
+        (click)="prev()"
+      >
+        Previous
+      </button>
+      <button
+        type="button"
+        class="inline-flex min-h-11 items-center justify-center rounded-[10px] border border-[#D9D9E8] bg-white px-5 text-sm font-bold text-[#0A0A3C] transition hover:bg-[#F6F6FA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A3C] disabled:cursor-not-allowed disabled:opacity-50"
+        [disabled]="!canNext()"
+        (click)="next()"
+      >
+        Next
+      </button>
+    </span>
+  </div>
+</section>
