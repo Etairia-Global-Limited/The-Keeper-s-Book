@@ -66,6 +66,8 @@ export class ApplicationClientList {
   protected readonly total = signal(0);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
+  protected readonly copiedId = signal<string | null>(null);
+  protected readonly copiedSecret = signal<string | null>(null);
 
   protected readonly totalPages = computed(() =>
     Math.max(1, Math.ceil(this.total() / this.pageSize())),
@@ -182,5 +184,29 @@ export class ApplicationClientList {
   }
   protected clearSearch(): void {
     this.filterModel.set({ search: '', filter: '' });
+  }
+
+  protected async copySecret(row: ClientRow): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(row.secret);
+      this.copiedSecret.set(row.secret);
+      setTimeout(() => {
+        if (this.copiedSecret() === row.secret) this.copiedSecret.set(null);
+      }, 2000);
+    } catch {
+      this.copiedSecret.set(null); // clipboard blocked (e.g. non-HTTPS page or denied permission)
+    }
+  }
+
+  protected async copyClientId(row: ClientRow): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(row.clientId);
+      this.copiedId.set(row.clientId);
+      setTimeout(() => {
+        if (this.copiedId() === row.clientId) this.copiedId.set(null);
+      }, 2000);
+    } catch {
+      this.copiedId.set(null); // clipboard blocked (e.g. non-HTTPS page or denied permission)
+    }
   }
 }

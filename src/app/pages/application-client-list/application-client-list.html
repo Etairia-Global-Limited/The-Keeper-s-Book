@@ -104,14 +104,34 @@
           @for (r of rows(); track r.id) {
             <tr class="hover:bg-[#FAFAFD]">
               <td
-                class="whitespace-nowrap border-b border-[#EEEEF6] px-4 py-3.5 text-sm font-bold text-[#0A0A3C]"
+                class="whitespace-nowrap border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]"
               >
-                {{ r.clientId }}
+                <span class="inline-flex items-center gap-2">
+                  <span aria-hidden="true" class="tracking-widest">••••••••••••</span>
+                  <button
+                    type="button"
+                    class="inline-flex min-h-11 items-center justify-center rounded-[10px] border border-[#D9D9E8] bg-white px-3 text-xs font-bold text-[#0A0A3C] transition hover:bg-[#F6F6FA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A3C]"
+                    [attr.aria-label]="'Copy Id for ' + r.clientId"
+                    (click)="copyClientId(r)"
+                  >
+                    {{ copiedId() === r.id ? 'Copied' : 'Copy' }}
+                  </button>
+                </span>
               </td>
               <td
-                class="whitespace-nowrap border-b border-[#EEEEF6] px-4 py-3.5 text-sm font-bold text-[#0A0A3C]"
+                class="whitespace-nowrap border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]"
               >
-                {{ r.secret }}
+                <span class="inline-flex items-center gap-2">
+                  <span aria-hidden="true" class="tracking-widest">••••••••••••</span>
+                  <button
+                    type="button"
+                    class="inline-flex min-h-11 items-center justify-center rounded-[10px] border border-[#D9D9E8] bg-white px-3 text-xs font-bold text-[#0A0A3C] transition hover:bg-[#F6F6FA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A0A3C]"
+                    [attr.aria-label]="'Copy secret for ' + r.clientId"
+                    (click)="copySecret(r)"
+                  >
+                    {{ copiedId() === r.id ? 'Copied' : 'Copy' }}
+                  </button>
+                </span>
               </td>
               <td class="border-b border-[#EEEEF6] px-4 py-3.5 text-sm text-[#3A3A5C]">
                 {{ r.application }}
