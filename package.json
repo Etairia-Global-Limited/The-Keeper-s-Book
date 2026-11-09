@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --open --host 0.0.0.0",
-    "build": "ng build",
+    "build": "node generate-key.js && ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:nexus-portal": "node dist/nexus-portal/server/server.mjs"
