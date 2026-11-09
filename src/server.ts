@@ -10,52 +10,67 @@ import 'dotenv/config';
 import express, { CookieOptions, Request, RequestHandler, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import * as crypto from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import https from 'node:https';
-import { extname, join } from 'node:path';
+import { extname, join, resolve } from 'node:path';
 import { decrypt, encrypt } from './app/constants/utility';
- 
+
 // ───────────────────────────── Config ─────────────────────────────
- 
+
 const browserDistFolder = join(import.meta.dirname, '../browser');
- 
+
 const BASE_URL = process.env['BASE_URL'];
 const CLIENT_NAME = process.env['CLIENT_ID'] ?? '';
-const GATEWAY_SECRET= process.env['GATEWAY_SECRET'] ?? 'sk_I5rptCczu1YXNHOCvlWAwzGYyzIvcb4IVGVgWJxaFQOIWFePOcFFQUKOLfkK3g1d'
+const GATEWAY_SECRET =
+  process.env['GATEWAY_SECRET'] ??
+  'sk_I5rptCczu1YXNHOCvlWAwzGYyzIvcb4IVGVgWJxaFQOIWFePOcFFQUKOLfkK3g1d';
 const CLIENT_SECRET = process.env['CLIENT_SECRET'] ?? '';
 const dev = process.env['DEV'] === 'true';
 const IS_DEV_ENV = process.env['ENV'] === 'dev';
- 
-const KEY_DIR = process.env['RSA_KEY_DIR'] || 'C:\\Users\\iawe\\Documents\\Projects\\dangote-ipo';
-const publicKey = readFileSync(join(KEY_DIR, 'public.pem'), 'utf8');
-const privateKey = readFileSync(join(KEY_DIR, 'private.pem'), 'utf8');
-const masterKey = readFileSync(join(KEY_DIR, 'master.key'));
- 
+
+// Resolve the key directory: env var first, otherwise the app's working directory.
+// resolve() normalises separators, so this works on both Windows and Linux.
+const KEY_DIR = resolve(process.env['RSA_KEY_DIR'] || process.cwd());
+
+function readKeyFile(name: string): Buffer {
+  const filePath = join(KEY_DIR, name);
+  if (!existsSync(filePath)) {
+    throw new Error(
+      `Key file not found: ${filePath}. Set RSA_KEY_DIR or generate keys with "node generate-key.js".`,
+    );
+  }
+  return readFileSync(filePath);
+}
+
+const publicKey = readKeyFile('public.pem').toString('utf8');
+const privateKey = readKeyFile('private.pem').toString('utf8');
+const masterKey = readKeyFile('master.key');
+
 const UNPROTECTED_ROUTES = new Set<string>(['/sign-in']); // Angular pages
 const PUBLIC_API_PATHS = new Set<string>(['/auth/login']); // backend endpoints
 const BODY_METHODS = new Set<string>(['POST', 'PUT', 'PATCH']);
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
- 
+
 const SEAL_TTL_MS = 60 * 60 * 1000;
 // Used only when a token is not a JWT and therefore carries no `exp`.
 const ACCESS_TTL_MS = 30 * 60 * 1000;
 const REFRESH_TTL_MS = 60 * 60 * 1000;
- 
+
 const COOKIE_BASE: CookieOptions = { httpOnly: true, secure: true, sameSite: 'lax' };
- 
+
 const apiCaller = axios.create({
   baseURL: BASE_URL,
   httpsAgent: new https.Agent({ rejectUnauthorized: dev }),
 });
 
-// Seal (per-session AES key) 
+// Seal (per-session AES key)
 const encryptAesKey = (key: Uint8Array): string => {
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv('aes-256-gcm', masterKey, iv);
   const cipherText = Buffer.concat([cipher.update(key), cipher.final()]);
   const tag = cipher.getAuthTag();
   return Buffer.concat([iv, tag, cipherText]).toString('base64url');
-}
+};
 
 const decryptAesKey = (encryptedKey: string): Uint8Array => {
   const buffer = Buffer.from(encryptedKey, 'base64url');
@@ -65,14 +80,14 @@ const decryptAesKey = (encryptedKey: string): Uint8Array => {
   const decipher = crypto.createDecipheriv('aes-256-gcm', masterKey, iv);
   decipher.setAuthTag(tag);
   return new Uint8Array(Buffer.concat([decipher.update(cipherText), decipher.final()]));
-}
+};
 
-// Session helpers  
+// Session helpers
 const normalize = (route: string): string => route.split(/[?#]/)[0].replace(/\/+$/, '') || '/';
- 
+
 const readToken = (req: Request): string | undefined =>
   req.cookies['auth_token'] ?? (IS_DEV_ENV ? req.cookies['dev_token'] : undefined);
- 
+
 const backendHeaders = (req: Request): Record<string, string> => ({
   name: CLIENT_NAME,
   key: CLIENT_SECRET,
@@ -81,7 +96,7 @@ const backendHeaders = (req: Request): Record<string, string> => ({
   'x-client-user-agent': req.headers['user-agent'] ?? '',
   'x-forwarded-for': req.ip ?? '',
 });
- 
+
 // The cookie lives exactly as long as the JWT. Once it ages out the browser drops it,
 // which ensureSession() treats the same as an expired token and refreshes.
 const cookieOptions = (token: string, fallbackTtlMs: number): CookieOptions => {
@@ -90,7 +105,7 @@ const cookieOptions = (token: string, fallbackTtlMs: number): CookieOptions => {
     ? { ...COOKIE_BASE, expires: new Date(exp * 1000) }
     : { ...COOKIE_BASE, maxAge: fallbackTtlMs };
 };
- 
+
 const setSession = (res: Response, accessToken: string, refreshToken?: string): void => {
   res.cookie('auth_token', accessToken, cookieOptions(accessToken, ACCESS_TTL_MS));
   if (refreshToken) {
@@ -104,32 +119,34 @@ const clearSession = (res: Response): void => {
     res.clearCookie(name, COOKIE_BASE);
   }
 };
- 
+
 type TokenResult =
   | { status: 'valid'; payload: JwtPayload }
   | { status: 'expired' }
   | { status: 'missing' }
   | { status: 'invalid' };
- 
+
 const verifyToken = (token?: string): TokenResult => {
   if (!token) return { status: 'missing' };
   try {
-    const payload = jwt.verify(token, process.env['JWT_SECRET']!, { algorithms: ['HS256'] }) as JwtPayload;
+    const payload = jwt.verify(token, process.env['JWT_SECRET']!, {
+      algorithms: ['HS256'],
+    }) as JwtPayload;
     return { status: 'valid', payload };
   } catch (err) {
     return err instanceof jwt.TokenExpiredError ? { status: 'expired' } : { status: 'invalid' };
   }
 };
- 
+
 type RefreshResult =
   | { status: 'ok'; accessToken: string }
   | { status: 'rejected' } // refresh token expired/revoked: the session is over
   | { status: 'error' }; // network/server problem: the session may still be fine
- 
+
 interface RefreshResponseDto {
   data?: { accessToken?: string };
 }
- 
+
 const requestRefresh = async (refreshToken: string, req: Request): Promise<RefreshResult> => {
   try {
     const r = await apiCaller.post<RefreshResponseDto>(
@@ -137,20 +154,20 @@ const requestRefresh = async (refreshToken: string, req: Request): Promise<Refre
       { refreshToken },
       { headers: backendHeaders(req), timeout: 5000, validateStatus: () => true },
     );
- 
+
     if (r.status === 401 || r.status === 403) return { status: 'rejected' };
     if (r.status < 200 || r.status >= 300) return { status: 'error' };
- 
+
     const accessToken = r.data?.data?.accessToken;
     return accessToken ? { status: 'ok', accessToken } : { status: 'error' };
   } catch {
     return { status: 'error' }; // network error or timeout
   }
 };
- 
+
 // Parallel requests carrying the same refresh token share one refresh call.
 const inflight = new Map<string, Promise<RefreshResult>>();
- 
+
 const refreshAccessToken = (refreshToken: string, req: Request): Promise<RefreshResult> => {
   let pending = inflight.get(refreshToken);
   if (!pending) {
@@ -159,11 +176,11 @@ const refreshAccessToken = (refreshToken: string, req: Request): Promise<Refresh
   }
   return pending;
 };
- 
+
 type Session =
   | { ok: true; payload: JwtPayload }
   | { ok: false; status: 401 | 503; message: string };
- 
+
 /**
  * The single place that decides whether a request has a usable session.
  * Valid access token -> ok. Expired/missing -> refresh once and set the new cookie.
@@ -172,25 +189,25 @@ type Session =
 const ensureSession = async (req: Request, res: Response): Promise<Session> => {
   const current = verifyToken(readToken(req));
   if (current.status === 'valid') return { ok: true, payload: current.payload };
- 
+
   const deny = (status: 401 | 503, message: string): Session => {
     if (status === 401) clearSession(res);
     return { ok: false, status, message };
   };
- 
+
   if (current.status === 'invalid') return deny(401, 'Unauthorized');
- 
+
   const refreshToken: string | undefined = req.cookies['refresh_token'];
   if (!refreshToken) return deny(401, 'Unauthorized');
- 
+
   const refreshed = await refreshAccessToken(refreshToken, req);
   if (refreshed.status === 'rejected') return deny(401, 'Session expired');
   if (refreshed.status === 'error') return deny(503, 'Unable to refresh session');
- 
+
   // Never trust the refresh response blindly.
   const verified = verifyToken(refreshed.accessToken);
   if (verified.status !== 'valid') return deny(401, 'Unauthorized');
- 
+
   setSession(res, refreshed.accessToken);
   req.cookies['auth_token'] = refreshed.accessToken; // readToken(req) now returns the fresh token
   return { ok: true, payload: verified.payload };
@@ -205,7 +222,9 @@ function filenameFrom(disposition = ''): string {
   if (star) {
     try {
       return decodeURIComponent(star[1].trim().replace(/^"|"$/g, ''));
-    } catch { /* fall through */ }
+    } catch {
+      /* fall through */
+    }
   }
   return /filename="?([^";]+)"?/i.exec(disposition)?.[1] ?? 'download';
 }
@@ -215,15 +234,19 @@ function parseBody(raw: unknown, contentType = ''): unknown {
   const text = Buffer.from(raw as any).toString('utf8');
   if (!text) return null;
   if (/json/i.test(contentType)) {
-    try { return JSON.parse(text); } catch { /* fall through */ }
+    try {
+      return JSON.parse(text);
+    } catch {
+      /* fall through */
+    }
   }
   return text;
 }
 
-const app = express()
+const app = express();
 
-app.use(express.json({ limit: '5mb'}));
-app.use(express.urlencoded({extended: true}));
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 const allowedCors = (process.env['ALLOWED_ORIG'] ?? 'localhost')
@@ -232,7 +255,7 @@ const allowedCors = (process.env['ALLOWED_ORIG'] ?? 'localhost')
   .filter(Boolean);
 
 const angularApp = new AngularNodeAppEngine({
-allowedHosts: allowedCors
+  allowedHosts: allowedCors,
 });
 
 app.get('/api/retrieve-token', (req, res) => {
@@ -261,9 +284,9 @@ app.post('/api/retrieve-token', (req, res) => {
 });
 
 // ───────────────────────────── API proxy ─────────────────────────────
- 
+
 const apiPath = (req: Request): string => req.path.replace(/^\/nexus/, '');
- 
+
 // The seal (session AES key) is required on every call, including login.
 const requireSeal: RequestHandler = (req, res, next) => {
   try {
@@ -274,11 +297,11 @@ const requireSeal: RequestHandler = (req, res, next) => {
   }
   next();
 };
- 
+
 // Everything except the public endpoints needs a session, refreshed silently if it expired.
 const requireApiSession: RequestHandler = async (req, res, next) => {
   if (PUBLIC_API_PATHS.has(apiPath(req))) return next();
- 
+
   const session = await ensureSession(req, res);
   if (!session.ok) {
     res.status(session.status).json({ message: session.message });
@@ -288,31 +311,31 @@ const requireApiSession: RequestHandler = async (req, res, next) => {
 };
 
 app.all('/nexus/*splat', requireSeal, requireApiSession, async (req, res): Promise<void> => {
-    const key: Uint8Array = res.locals['key'];
-    const api = apiPath(req);
-    const token = readToken(req);
+  const key: Uint8Array = res.locals['key'];
+  const api = apiPath(req);
+  const token = readToken(req);
 
- // 3. Headers are built after the key exists, so name and key go with every call.
-     const headers: Record<string, string> = {
+  // 3. Headers are built after the key exists, so name and key go with every call.
+  const headers: Record<string, string> = {
     'Content-Type': req.headers['content-type'] || 'application/json',
     ...backendHeaders(req),
     ...(token && { Authorization: `Bearer ${token}` }),
   };
 
-   try {
+  try {
     let data: unknown;
- 
+
     if (BODY_METHODS.has(req.method) && req.body?.payload) {
       const decrypted: any = await decrypt(req.body.payload, key);
       const file = decrypted?.File;
- 
+
       if (file?.__file) {
         const buffer = Buffer.from(file.data, 'base64');
         if (buffer.length > MAX_FILE_BYTES) {
           res.status(413).json({ message: 'File size should not exceed 5MB' });
           return;
         }
- 
+
         const form = new FormData();
         form.append('File', new Blob([new Uint8Array(buffer)], { type: file.type }), file.name);
         data = form;
@@ -321,7 +344,7 @@ app.all('/nexus/*splat', requireSeal, requireApiSession, async (req, res): Promi
         data = decrypted;
       }
     }
- 
+
     const response = await apiCaller.request({
       method: req.method,
       url: api,
@@ -364,7 +387,7 @@ app.all('/nexus/*splat', requireSeal, requireApiSession, async (req, res): Promi
   } catch (error: any) {
     console.error('Error: ', error.message);
     const status = error?.response?.status || 500;
-     const data = error?.response?.data
+    const data = error?.response?.data
       ? parseBody(error.response.data, error.response.headers?.['content-type'])
       : 'Proxy error';
     res.status(status).json(data);
@@ -383,16 +406,22 @@ app.get('/auth/validate', async (req, res): Promise<void> => {
     return;
   }
 
-   const session = await ensureSession(req, res);
+  const session = await ensureSession(req, res);
   if (!session.ok) {
     res.status(session.status).json({ message: session.message });
     return;
   }
- 
+
   const { payload } = session;
   res.json({
     valid: true,
-    user: { id: payload.sub, username: payload['username'], role: payload['role'], roleId: payload['roleId'], userId: payload['userId'] },
+    user: {
+      id: payload.sub,
+      username: payload['username'],
+      role: payload['role'],
+      roleId: payload['roleId'],
+      userId: payload['userId'],
+    },
   });
 });
 
@@ -418,21 +447,21 @@ app.use(async (req, res, next): Promise<void> => {
   const isPageLoad =
     (req.method === 'GET' || req.method === 'HEAD') && req.accepts('html') && !extname(req.path);
   if (!isPageLoad) return next();
- 
+
   const session = await ensureSession(req, res);
- 
+
   if (UNPROTECTED_ROUTES.has(normalize(req.path))) {
     // Send signed-in users away from the sign-in page.
     return session.ok ? res.redirect(302, '/dashboard') : next();
   }
- 
+
   if (session.ok) return next();
- 
+
   if (session.status === 503) {
     res.status(503).send('Service temporarily unavailable');
     return;
   }
- 
+
   res.redirect(302, '/sign-in'); // ensureSession already cleared the cookies
 });
 
@@ -442,9 +471,7 @@ app.use(async (req, res, next): Promise<void> => {
 app.use((req, res, next) => {
   angularApp
     .handle(req)
-    .then((response) =>
-      response ? writeResponseToNodeResponse(response, res) : next(),
-    )
+    .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))
     .catch(next);
 });
 
