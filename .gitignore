@@ -43,7 +43,7 @@ __screenshots__/
 Thumbs.db
 
 .env
-/generate-key.js
+# /generate-key.js
 master.key
 private.pem
 public.pem
